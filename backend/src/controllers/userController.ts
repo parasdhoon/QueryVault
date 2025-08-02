@@ -20,6 +20,8 @@ export const signUp = async (req: Request, res: Response) => {
             data: {email, passwordHash: hashedPassword}
         });
 
+        console.log(`User created: ${user.email}`);
+
         res.status(201).json({ message: 'User created', userId: user.id });
     } catch (error) {
         res.status(500).json({ error: 'Failed to register user', details: error })

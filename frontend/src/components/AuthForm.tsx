@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 
 type Props = {
     type: 'signup' | 'signin';
@@ -17,13 +18,37 @@ export default function AuthForm({ type }: Props) {
         e.preventDefault();
 
         try {
-            const response = await fetch(`/api/auth/${type}`, {
-                method: 'POST',
-                body: JSON.stringify({ email, password, name }),
-                headers: { 'Content-Type': 'application/json' }
-            });
+            if (type === 'signup') {
+                const res = await fetch(`http://localhost:3000/api/users/signup`, {
+                    method: 'POST',
+                    body: JSON.stringify({ email, password, name }),
+                    headers: { 'Content-Type': 'application/json' }
+                });
 
-            router.push('/');
+                alert(res.status);
+                
+                if (!res.ok) throw new Error('Signup failed' + res.status);
+                
+                await signIn("credentials", {
+                    email,
+                    password,
+                    redirect: false,
+                });
+
+                router.push('/');
+            } else {
+                const result = await signIn("credentials", {
+                    email,
+                    password,
+                    redirect: false,
+                });
+
+                if (result?.error) {
+                    alert("Invalid credentials");
+                } else {
+                    router.push('/');
+                }
+            }
         } catch (error) {
             console.error('Error during authentication:', error);
             alert('Authentication failed. Please try again.');
@@ -75,9 +100,8 @@ export default function AuthForm({ type }: Props) {
                     {type === 'signup' ? 'Sign Up' : 'Sign In'}
                 </button>
 
-                {/* Navigation Links */}
                 <div className="mt-6 text-center text-sm text-gray-600 space-y-2">
-                    {type === 'signin' && (
+                    {type === 'signin' ? (
                         <>
                             <p>
                                 Don’t have an account?{' '}
@@ -99,9 +123,7 @@ export default function AuthForm({ type }: Props) {
                                 </button>
                             </p>
                         </>
-                    )}
-
-                    {type === 'signup' && (
+                    ) : (
                         <p>
                             Already have an account?{' '}
                             <button
